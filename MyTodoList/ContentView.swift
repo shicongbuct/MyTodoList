@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var showingAddSheet = false
     @State private var searchText = ""
     @State private var showingClearAlert = false
+    @State private var editingItem: Item?
 
     private var filteredItems: [Item] {
         if searchText.isEmpty {
@@ -58,6 +59,8 @@ struct ContentView: View {
                                             toggleComplete(item)
                                         } onDelete: {
                                             deleteItem(item)
+                                        } onTap: {
+                                            editingItem = item
                                         }
                                         .transition(.asymmetric(
                                             insertion: .scale.combined(with: .opacity),
@@ -91,6 +94,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingAddSheet) {
                 AddTodoView()
+            }
+            .sheet(item: $editingItem) { item in
+                EditTodoView(item: item)
             }
             .alert("清空已完成", isPresented: $showingClearAlert) {
                 Button("取消", role: .cancel) { }
@@ -291,6 +297,7 @@ struct TodoCardView: View {
     let item: Item
     let onToggle: () -> Void
     let onDelete: () -> Void
+    let onTap: () -> Void
 
     @State private var offset: CGFloat = 0
     @State private var showDeleteButton = false
@@ -301,11 +308,22 @@ struct TodoCardView: View {
 
             cardContent
                 .offset(x: offset)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if showDeleteButton {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            offset = 0
+                            showDeleteButton = false
+                        }
+                    }
+                }
                 .gesture(
                     DragGesture()
                         .onChanged { value in
                             if value.translation.width < 0 {
                                 offset = max(value.translation.width, -80)
+                            } else if showDeleteButton {
+                                offset = min(0, -80 + value.translation.width)
                             }
                         }
                         .onEnded { value in
@@ -401,8 +419,22 @@ struct TodoCardView: View {
                     priorityBadge
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onToggle()
+            }
 
             Spacer()
+
+            Button {
+                onTap()
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.5))
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(

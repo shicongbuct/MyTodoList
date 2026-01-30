@@ -1,0 +1,39 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Xcode 项目文件（自动生成，很大）
+*.pbxproj
+
+# Git
+.git/
+
+# CocoaPods
+Pods/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# 图片资源（二进制文件）
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.pdf
+
+# 其他二进制
+*.ipa
+*.dSYM.zip
+*.dSYM
