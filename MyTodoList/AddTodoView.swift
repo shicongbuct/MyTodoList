@@ -11,14 +11,28 @@ import SwiftData
 struct AddTodoView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \StudyCategory.createdAt) private var categories: [StudyCategory]
+
+    var initialSection: Section = .life
+    var initialCategory: StudyCategory?
 
     @State private var title = ""
     @State private var notes = ""
     @State private var priority: Priority = .medium
     @State private var hasDueDate = false
     @State private var dueDate = Date()
+    @State private var selectedSection: Section = .life
+    @State private var selectedCategory: StudyCategory?
 
     @FocusState private var titleFocused: Bool
+
+    private var canAdd: Bool {
+        let hasTitle = !title.trimmingCharacters(in: .whitespaces).isEmpty
+        if selectedSection == .study {
+            return hasTitle && selectedCategory != nil
+        }
+        return hasTitle
+    }
 
     var body: some View {
         NavigationStack {
@@ -35,6 +49,10 @@ struct AddTodoView: View {
 
                 ScrollView {
                     VStack(spacing: 24) {
+                        sectionPickerSection
+                        if selectedSection == .study {
+                            categorySection
+                        }
                         titleSection
                         notesSection
                         prioritySection
@@ -67,14 +85,122 @@ struct AddTodoView: View {
                             endPoint: .trailing
                         )
                     )
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!canAdd)
                 }
             }
             .onAppear {
+                selectedSection = initialSection
+                selectedCategory = initialCategory
                 titleFocused = true
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var sectionPickerSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("分区")
+
+            HStack(spacing: 12) {
+                sectionButton(section: .life, icon: "house.fill", label: "生活")
+                sectionButton(section: .study, icon: "book.fill", label: "学习")
+            }
+        }
+    }
+
+    private func sectionButton(section: Section, icon: String, label: String) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedSection = section
+                if section == .life {
+                    selectedCategory = nil
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                Text(label)
+                    .font(.system(size: 15, weight: .medium))
+            }
+            .foregroundColor(selectedSection == section ? .white : .secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(selectedSection == section ? Color.purple.opacity(0.3) : Color(white: 0.15).opacity(0.9))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(selectedSection == section ? Color.purple.opacity(0.5) : Color.white.opacity(0.08), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var categorySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                sectionLabel("学习分类")
+                if selectedCategory == nil {
+                    Text("(必选)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.red.opacity(0.8))
+                }
+            }
+
+            if categories.isEmpty {
+                HStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.orange)
+                    Text("暂无分类，请先创建学习分类")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(inputBackground)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(categories) { category in
+                            categoryChip(category)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                }
+            }
+        }
+    }
+
+    private func categoryChip(_ category: StudyCategory) -> some View {
+        let isSelected = selectedCategory?.persistentModelID == category.persistentModelID
+        let color = Color(hex: category.colorHex) ?? .blue
+
+        return Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedCategory = category
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(category.icon)
+                    .font(.system(size: 16))
+                Text(category.name)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isSelected ? .white : .secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(isSelected ? color.opacity(0.3) : Color(white: 0.15).opacity(0.9))
+                    .overlay(
+                        Capsule()
+                            .stroke(isSelected ? color.opacity(0.5) : Color.white.opacity(0.08), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var titleSection: some View {
@@ -196,7 +322,9 @@ struct AddTodoView: View {
             title: title.trimmingCharacters(in: .whitespaces),
             notes: notes.trimmingCharacters(in: .whitespaces),
             dueDate: hasDueDate ? dueDate : nil,
-            priority: priority
+            priority: priority,
+            section: selectedSection,
+            category: selectedCategory
         )
         modelContext.insert(newItem)
         dismiss()
@@ -271,5 +399,10 @@ struct PriorityButton: View {
 
 #Preview {
     AddTodoView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Item.self, StudyCategory.self], inMemory: true)
+}
+
+#Preview("Study Section") {
+    AddTodoView(initialSection: .study)
+        .modelContainer(for: [Item.self, StudyCategory.self], inMemory: true)
 }

@@ -22,26 +22,48 @@ xcodebuild test -scheme MyTodoList -destination 'platform=iOS Simulator,name=iPh
 
 **SwiftUI + SwiftData 应用**，数据仅存储在本地（无后端）。
 
-### 核心文件
+应用分为两个主要分区：**生活**和**学习**，通过底部 TabBar 切换。学习分区支持自定义分类管理。
 
-- `MyTodoListApp.swift` - 应用入口，配置 SwiftData ModelContainer
-- `Item.swift` - 数据模型：`Item` 类与 `Priority` 枚举（低/中/高）
-- `ContentView.swift` - 主视图，包含任务列表、搜索、待办/已完成分区
-- `AddTodoView.swift` - 新建任务的弹出表单
+### 数据模型
+
+`Item.swift` 定义核心数据结构：
+- `Item` 类（@Model）- 任务模型
+  - `title`、`notes`、`isCompleted`、`createdAt`、`dueDate`
+  - `priorityRaw` / `priority` - 优先级（低/中/高）
+  - `sectionRaw` / `section` - 分区（生活=0 / 学习=1）
+  - `category` - 关联的学习分类（可选）
+- `Priority` 枚举 - 低/中/高
+- `Section` 枚举 - 生活/学习
+
+`StudyCategory.swift` 定义学习分类：
+- `StudyCategory` 类（@Model）- 分类模型
+  - `name`、`icon`（emoji）、`colorHex`、`createdAt`
+  - `items` - 关联的任务列表（级联删除）
+
+### 视图结构
+
+| 文件 | 说明 |
+|------|------|
+| `MyTodoListApp.swift` | 应用入口，配置 ModelContainer，初始化预设分类 |
+| `MainTabView.swift` | 主框架：TabBar（生活/学习）+ FAB 按钮 + NavigationState |
+| `ContentView.swift` | 生活任务列表，含 `TodoCardView`、`CompletedCardView` |
+| `StudyView.swift` | 学习分类网格，含 `CategoryCardView` |
+| `CategoryDetailView.swift` | 分类详情页，含 `StudyTodoCardView`、`StudyCompletedCardView` |
+| `AddTodoView.swift` | 新建任务表单（支持选择分区和分类） |
+| `EditTodoView.swift` | 编辑任务表单 |
+| `AddCategoryView.swift` | 新建/编辑学习分类表单 |
 
 ### 数据流
 
-SwiftData 自动处理持久化。`Item` 模型使用 `@Model` 宏，存储字段：
-- `title`、`notes`、`isCompleted`、`createdAt`、`dueDate`、`priorityRaw`
+- SwiftData 自动处理持久化
+- 视图通过 `@Query` 访问数据，通过 `@Environment(\.modelContext)` 修改
+- `NavigationState`（@Observable）跟踪当前选中的学习分类，用于 FAB 按钮判断上下文
 
-视图通过 `@Query` 访问数据，通过 `@Environment(\.modelContext)` 修改数据。
+### UI 交互
 
-### UI 组件
-
-`ContentView.swift` 包含三个视图结构体：
-- `ContentView` - 主列表，分待办和已完成两个区域
-- `TodoCardView` - 待办任务卡片，支持左滑删除手势
-- `CompletedCardView` - 已完成任务卡片，带可见的删除按钮
+- 任务卡片支持左滑显示删除按钮
+- 已完成任务区域有"清空全部"功能
+- 学习分类卡片通过 Menu 提供编辑/删除选项
 
 ## 语言
 

@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  CategoryDetailView.swift
 //  MyTodoList
 //
 //  Created by miles on 2026/1/30.
@@ -8,128 +8,115 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct CategoryDetailView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(
-        filter: #Predicate<Item> { $0.sectionRaw == 0 },
-        sort: \Item.createdAt,
-        order: .reverse
-    ) private var items: [Item]
-    @State private var searchText = ""
+    @Environment(\.dismiss) private var dismiss
+    let category: StudyCategory
+    var navigationState: NavigationState?
+
+    @Query private var allItems: [Item]
     @State private var showingClearAlert = false
     @State private var editingItem: Item?
 
-    private var filteredItems: [Item] {
-        if searchText.isEmpty {
-            return items
-        }
-        return items.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+    private var categoryItems: [Item] {
+        allItems.filter { $0.category?.persistentModelID == category.persistentModelID }
+            .sorted { $0.createdAt > $1.createdAt }
     }
 
     private var pendingItems: [Item] {
-        filteredItems.filter { !$0.isCompleted }
+        categoryItems.filter { !$0.isCompleted }
     }
 
     private var completedItems: [Item] {
-        filteredItems.filter { $0.isCompleted }
+        categoryItems.filter { $0.isCompleted }
+    }
+
+    private var categoryColor: Color {
+        Color(hex: category.colorHex) ?? .blue
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.12),
-                        Color(red: 0.10, green: 0.08, blue: 0.18)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.05, green: 0.05, blue: 0.12),
+                    Color(red: 0.10, green: 0.08, blue: 0.18)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    headerView
-
-                    if items.isEmpty {
-                        emptyStateView
-                    } else {
-                        ScrollView {
-                            LazyVStack(spacing: 12) {
-                                if !pendingItems.isEmpty {
-                                    sectionHeader("待办", count: pendingItems.count)
-                                    ForEach(pendingItems) { item in
-                                        TodoCardView(item: item) {
-                                            toggleComplete(item)
-                                        } onDelete: {
-                                            deleteItem(item)
-                                        } onTap: {
-                                            editingItem = item
-                                        }
-                                        .id("\(item.persistentModelID)-pending")
-                                        .transition(.asymmetric(
-                                            insertion: .scale.combined(with: .opacity),
-                                            removal: .slide.combined(with: .opacity)
-                                        ))
+            VStack(spacing: 0) {
+                if categoryItems.isEmpty {
+                    emptyStateView
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            if !pendingItems.isEmpty {
+                                sectionHeader("待办", count: pendingItems.count)
+                                ForEach(pendingItems) { item in
+                                    StudyTodoCardView(item: item, categoryColor: categoryColor) {
+                                        toggleComplete(item)
+                                    } onDelete: {
+                                        deleteItem(item)
+                                    } onTap: {
+                                        editingItem = item
                                     }
-                                }
-
-                                if !completedItems.isEmpty {
-                                    completedSectionHeader
-                                        .padding(.top, pendingItems.isEmpty ? 0 : 20)
-                                    ForEach(completedItems) { item in
-                                        CompletedCardView(item: item) {
-                                            toggleComplete(item)
-                                        } onDelete: {
-                                            deleteItem(item)
-                                        }
-                                        .id("\(item.persistentModelID)-completed")
-                                    }
+                                    .id("\(item.persistentModelID)-pending")
                                 }
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 100)
+
+                            if !completedItems.isEmpty {
+                                completedSectionHeader
+                                    .padding(.top, pendingItems.isEmpty ? 0 : 20)
+                                ForEach(completedItems) { item in
+                                    StudyCompletedCardView(item: item, categoryColor: categoryColor) {
+                                        toggleComplete(item)
+                                    } onDelete: {
+                                        deleteItem(item)
+                                    }
+                                    .id("\(item.persistentModelID)-completed")
+                                }
+                            }
                         }
-                        .searchable(text: $searchText, prompt: "搜索任务...")
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 100)
                     }
                 }
             }
-            .navigationBarHidden(true)
-            .sheet(item: $editingItem) { item in
-                EditTodoView(item: item)
-            }
-            .alert("清空已完成", isPresented: $showingClearAlert) {
-                Button("取消", role: .cancel) { }
-                Button("清空", role: .destructive) {
-                    deleteAllCompleted()
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 8) {
+                    Text(category.icon)
+                        .font(.system(size: 20))
+                    Text(category.name)
+                        .font(.headline)
+                        .foregroundColor(.white)
                 }
-            } message: {
-                Text("确定要删除所有已完成的任务吗？此操作无法撤销。")
             }
+        }
+        .sheet(item: $editingItem) { item in
+            EditTodoView(item: item)
+        }
+        .onAppear {
+            navigationState?.selectedStudyCategory = category
+        }
+        .onDisappear {
+            navigationState?.selectedStudyCategory = nil
+        }
+        .alert("清空已完成", isPresented: $showingClearAlert) {
+            Button("取消", role: .cancel) { }
+            Button("清空", role: .destructive) {
+                deleteAllCompleted()
+            }
+        } message: {
+            Text("确定要删除所有已完成的任务吗？此操作无法撤销。")
         }
         .preferredColorScheme(.dark)
-    }
-
-    private var headerView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(Date(), format: .dateTime.weekday(.wide).month().day())
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
-
-            Text("生活")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.white, Color(white: 0.8)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-        .padding(.bottom, 16)
     }
 
     private var emptyStateView: some View {
@@ -141,34 +128,27 @@ struct ContentView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.purple.opacity(0.3),
-                                Color.blue.opacity(0.2)
+                                categoryColor.opacity(0.3),
+                                categoryColor.opacity(0.1)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 120, height: 120)
-                    .blur(radius: 20)
+                    .frame(width: 100, height: 100)
+                    .blur(radius: 15)
 
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 64, weight: .light))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                Text(category.icon)
+                    .font(.system(size: 48))
             }
 
             VStack(spacing: 8) {
                 Text("暂无任务")
-                    .font(.title2)
+                    .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
 
-                Text("点击 + 按钮创建第一个任务")
+                Text("点击下方 + 按钮添加\(category.name)任务")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -265,8 +245,9 @@ struct ContentView: View {
     }
 }
 
-struct TodoCardView: View {
+struct StudyTodoCardView: View {
     let item: Item
+    let categoryColor: Color
     let onToggle: () -> Void
     let onDelete: () -> Void
     let onTap: () -> Void
@@ -340,7 +321,7 @@ struct TodoCardView: View {
                 onToggle()
             } label: {
                 Circle()
-                    .stroke(priorityColor.opacity(0.6), lineWidth: 2)
+                    .stroke(categoryColor.opacity(0.6), lineWidth: 2)
                     .frame(width: 28, height: 28)
             }
             .buttonStyle(.plain)
@@ -406,7 +387,7 @@ struct TodoCardView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(categoryColor.opacity(0.2), lineWidth: 1)
                 )
         )
     }
@@ -432,12 +413,13 @@ struct TodoCardView: View {
     }
 
     private func isOverdue(_ date: Date) -> Bool {
-        !item.isCompleted && date < Date()
+        date < Date()
     }
 }
 
-struct CompletedCardView: View {
+struct StudyCompletedCardView: View {
     let item: Item
+    let categoryColor: Color
     let onToggle: () -> Void
     let onDelete: () -> Void
 
@@ -494,7 +476,7 @@ struct CompletedCardView: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 22))
-                    .foregroundColor(.secondary.opacity(0.6))
+                    .foregroundColor(.secondary.opacity(0.4))
             }
             .buttonStyle(.plain)
         }
@@ -521,6 +503,8 @@ struct CompletedCardView: View {
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    NavigationStack {
+        CategoryDetailView(category: StudyCategory(name: "AI 学习", icon: "🤖", colorHex: "#63B3FF"), navigationState: nil)
+    }
+    .modelContainer(for: [Item.self, StudyCategory.self], inMemory: true)
 }

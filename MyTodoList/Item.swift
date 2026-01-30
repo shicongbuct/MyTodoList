@@ -30,6 +30,11 @@ enum Priority: Int, Codable, CaseIterable {
     }
 }
 
+enum Section: Int, Codable {
+    case life = 0
+    case study = 1
+}
+
 @Model
 final class Item {
     var title: String
@@ -38,10 +43,17 @@ final class Item {
     var createdAt: Date
     var dueDate: Date?
     var priorityRaw: Int
+    var sectionRaw: Int = 0
+    var category: StudyCategory?
 
     var priority: Priority {
         get { Priority(rawValue: priorityRaw) ?? .medium }
         set { priorityRaw = newValue.rawValue }
+    }
+
+    var section: Section {
+        get { Section(rawValue: sectionRaw) ?? .life }
+        set { sectionRaw = newValue.rawValue }
     }
 
     init(
@@ -50,7 +62,9 @@ final class Item {
         isCompleted: Bool = false,
         createdAt: Date = Date(),
         dueDate: Date? = nil,
-        priority: Priority = .medium
+        priority: Priority = .medium,
+        section: Section = .life,
+        category: StudyCategory? = nil
     ) {
         self.title = title
         self.notes = notes
@@ -58,5 +72,7 @@ final class Item {
         self.createdAt = createdAt
         self.dueDate = dueDate
         self.priorityRaw = priority.rawValue
+        self.sectionRaw = section.rawValue
+        self.category = category
     }
 }
