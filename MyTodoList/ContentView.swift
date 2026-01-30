@@ -39,8 +39,8 @@ struct ContentView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.12),
-                        Color(red: 0.10, green: 0.08, blue: 0.18)
+                        Color(red: 0.08, green: 0.15, blue: 0.12),
+                        Color(red: 0.10, green: 0.18, blue: 0.14)
                     ],
                     startPoint: .top,
                     endPoint: .bottom

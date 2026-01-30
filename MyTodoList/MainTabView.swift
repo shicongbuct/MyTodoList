@@ -34,7 +34,7 @@ struct MainTabView: View {
             customTabBar
 
             fabButton
-                .offset(y: -30)
+                .offset(y: -12)
         }
         .ignoresSafeArea(.keyboard)
         .sheet(isPresented: $showingAddSheet) {
@@ -44,35 +44,31 @@ struct MainTabView: View {
     }
 
     private var customTabBar: some View {
-        HStack(spacing: 0) {
-            tabButton(icon: "house.fill", label: "生活", tag: 0)
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                tabButton(icon: "house.fill", label: "生活", tag: 0)
 
-            Spacer()
-                .frame(width: 80)
+                Spacer()
+                    .frame(width: 80)
 
-            tabButton(icon: "book.fill", label: "学习", tag: 1)
+                tabButton(icon: "book.fill", label: "学习", tag: 1)
+            }
+            .padding(.horizontal, 40)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 40)
-        .padding(.top, 12)
-        .padding(.bottom, 24)
         .background(
             Rectangle()
                 .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.08, green: 0.08, blue: 0.15),
-                            Color(red: 0.06, green: 0.06, blue: 0.12)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+                    Color(red: 0.06, green: 0.06, blue: 0.10)
                 )
                 .overlay(
                     Rectangle()
-                        .fill(Color.white.opacity(0.05))
+                        .fill(Color.white.opacity(0.08))
                         .frame(height: 0.5),
                     alignment: .top
                 )
+                .ignoresSafeArea(edges: .bottom)
         )
     }
 
