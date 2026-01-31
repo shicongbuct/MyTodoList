@@ -1,7 +1,7 @@
 ---
-name: 提交版本代码
+name: 提交新版本代码
 description: 发布新版本：更新文档、提交代码、推送远端
-argument-hint: [版本号，如 1.01]
+argument-hint: [版本号，如 1.02]
 allowed-tools: Bash, Write, Read, Edit, Glob, Grep
 ---
 
