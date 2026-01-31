@@ -33,6 +33,7 @@ enum Priority: Int, Codable, CaseIterable {
 enum Section: Int, Codable {
     case life = 0
     case study = 1
+    case hidden = 2
 }
 
 @Model

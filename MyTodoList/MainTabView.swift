@@ -16,6 +16,7 @@ class NavigationState {
 struct MainTabView: View {
     @State private var selectedTab = 0
     @State private var showingAddSheet = false
+    @State private var showingAddExerciseSheet = false
     @State private var addSection: Section = .life
     @State private var addCategory: StudyCategory?
     @State private var navigationState = NavigationState()
@@ -29,6 +30,12 @@ struct MainTabView: View {
                 StudyView()
                     .environment(navigationState)
                     .tag(1)
+
+                FitnessView(selectedTab: $selectedTab)
+                    .tag(2)
+
+                CookView()
+                    .tag(3)
             }
 
             customTabBar
@@ -40,20 +47,28 @@ struct MainTabView: View {
         .sheet(isPresented: $showingAddSheet) {
             AddTodoView(initialSection: addSection, initialCategory: addCategory)
         }
+        .sheet(isPresented: $showingAddExerciseSheet) {
+            AddExerciseView()
+        }
         .preferredColorScheme(.dark)
     }
 
     private var customTabBar: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
+                // 左侧两个 tab
                 tabButton(icon: "house.fill", label: "生活", tag: 0)
-
-                Spacer()
-                    .frame(width: 80)
-
                 tabButton(icon: "book.fill", label: "学习", tag: 1)
+
+                // 中间 FAB 占位
+                Spacer()
+                    .frame(width: 72)
+
+                // 右侧两个 tab
+                tabButton(icon: "figure.run", label: "健身", tag: 2)
+                tabButton(icon: "fork.knife", label: "Cook", tag: 3)
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 16)
             .padding(.top, 12)
             .padding(.bottom, 8)
         }
@@ -74,7 +89,15 @@ struct MainTabView: View {
 
     private func tabButton(icon: String, label: String, tag: Int) -> some View {
         let isSelected = selectedTab == tag
-        let activeColor = tag == 0 ? Color.cyan : Color.purple
+        let activeColor: Color = {
+            switch tag {
+            case 0: return .cyan
+            case 1: return .purple
+            case 2: return .green
+            case 3: return .orange
+            default: return .blue
+            }
+        }()
 
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -114,20 +137,26 @@ struct MainTabView: View {
 
     private var fabButton: some View {
         Button {
-            if let category = navigationState.selectedStudyCategory {
+            if selectedTab == 2 {
+                // 健身 tab: 弹出添加运动
+                showingAddExerciseSheet = true
+            } else if let category = navigationState.selectedStudyCategory {
                 // 在学习分类详情页
                 addSection = .study
                 addCategory = category
+                showingAddSheet = true
             } else if selectedTab == 1 {
                 // 在学习主页
                 addSection = .study
                 addCategory = nil
-            } else {
+                showingAddSheet = true
+            } else if selectedTab == 0 {
                 // 在生活页
                 addSection = .life
                 addCategory = nil
+                showingAddSheet = true
             }
-            showingAddSheet = true
+            // Cook tab (3) 不响应 FAB
         } label: {
             ZStack {
                 Circle()
@@ -154,5 +183,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [Item.self, StudyCategory.self], inMemory: true)
+        .modelContainer(for: [Item.self, StudyCategory.self, ExercisePreset.self, TodayExercise.self, FitnessPlan.self, IngredientCategory.self, Ingredient.self, MealPlan.self], inMemory: true)
 }

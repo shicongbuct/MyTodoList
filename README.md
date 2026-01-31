@@ -2,11 +2,16 @@
 
 一款现代化的 iOS 待办事项应用，采用深色 UI 设计。
 
+**版本：1.01**
+
 ## 功能特性
 
-### 双分区设计
+### 四大模块
+
 - **生活** - 日常任务管理，支持搜索
 - **学习** - 学习任务管理，支持自定义分类
+- **健身** - 运动计划管理，周/月计划
+- **Cook** - 食材管理，饮食计划
 
 ### 任务管理
 - 创建、编辑、完成、删除任务
@@ -21,8 +26,23 @@
 - 分类内任务独立管理
 - 删除分类时级联删除关联任务
 
+### 健身模块
+- 今日运动计划（可完成打卡）
+- 运动预设管理（可添加/删除）
+- 本周计划、本月计划编辑
+
+### Cook 模块
+- 食材分类管理（肉类、蔬菜、主食、水果、零食等）
+- 各分类下食材管理
+- 三日饮食计划（今日/明日/后天）
+- 每日三餐计划编辑
+
+### 隐藏事项
+- 通过健身页面下拉触发
+- 密码保护的私密待办事项
+
 ### 界面设计
-- 深紫色渐变主题
+- 深色渐变主题
 - 卡片式任务展示
 - 底部 TabBar + 悬浮添加按钮
 - 流畅的过渡动画
@@ -44,17 +64,42 @@
 
 ```
 MyTodoList/
-├── MyTodoListApp.swift      # 应用入口，初始化 SwiftData
-├── Item.swift               # 任务数据模型
-├── StudyCategory.swift      # 学习分类数据模型
-├── MainTabView.swift        # 主框架（TabBar + FAB）
-├── ContentView.swift        # 生活任务列表
-├── StudyView.swift          # 学习分类网格
-├── CategoryDetailView.swift # 分类详情页
-├── AddTodoView.swift        # 新建任务
-├── EditTodoView.swift       # 编辑任务
-├── AddCategoryView.swift    # 新建/编辑分类
-└── Assets.xcassets/         # 图标和颜色资源
+├── MyTodoListApp.swift          # 应用入口
+├── MainTabView.swift            # 主框架（TabBar + FAB）
+│
+├── 生活模块
+│   ├── ContentView.swift        # 生活任务列表
+│   ├── AddTodoView.swift        # 新建任务
+│   └── EditTodoView.swift       # 编辑任务
+│
+├── 学习模块
+│   ├── StudyView.swift          # 学习分类网格
+│   ├── CategoryDetailView.swift # 分类详情页
+│   └── AddCategoryView.swift    # 新建/编辑分类
+│
+├── 健身模块
+│   ├── FitnessView.swift        # 健身主页
+│   ├── FitnessModels.swift      # 健身数据模型
+│   ├── AddExerciseView.swift    # 添加今日运动
+│   └── AddExercisePresetView.swift # 添加运动预设
+│
+├── Cook 模块
+│   ├── CookView.swift           # 食材管理 + 饮食计划
+│   ├── CookModels.swift         # 食材数据模型
+│   ├── IngredientCategoryDetailView.swift
+│   ├── AddIngredientCategoryView.swift
+│   └── AddIngredientView.swift
+│
+├── 隐藏事项
+│   ├── HiddenTodoView.swift     # 隐藏事项列表
+│   ├── AddHiddenTodoView.swift  # 添加隐藏事项
+│   └── PasswordView.swift       # 密码输入
+│
+├── 数据模型
+│   ├── Item.swift               # 任务模型
+│   └── StudyCategory.swift      # 学习分类模型
+│
+└── Assets.xcassets/             # 图标和颜色资源
 ```
 
 ## 技术栈
@@ -62,6 +107,19 @@ MyTodoList/
 - **SwiftUI** - 声明式 UI 框架
 - **SwiftData** - 本地数据持久化
 - **Swift 5.9** - 编程语言
+
+## 更新日志
+
+### v1.01 (2026-01-31)
+- 新增健身模块：今日运动计划、周/月计划
+- 新增 Cook 模块：食材分类管理、三日饮食计划
+- 新增隐藏事项功能（密码保护）
+- 优化 TabBar 样式
+
+### v1.0 (2026-01-30)
+- 初始版本
+- 生活/学习双分区
+- 学习分类功能
 
 ## 许可证
 
