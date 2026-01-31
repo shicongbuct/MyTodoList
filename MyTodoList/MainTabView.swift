@@ -20,6 +20,7 @@ struct MainTabView: View {
     @State private var addSection: Section = .life
     @State private var addCategory: StudyCategory?
     @State private var navigationState = NavigationState()
+    @State private var addSheetId = UUID()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -46,6 +47,12 @@ struct MainTabView: View {
         .ignoresSafeArea(.keyboard)
         .sheet(isPresented: $showingAddSheet) {
             AddTodoView(initialSection: addSection, initialCategory: addCategory)
+                .id(addSheetId)
+        }
+        .onChange(of: showingAddSheet) { _, newValue in
+            if newValue {
+                addSheetId = UUID()
+            }
         }
         .sheet(isPresented: $showingAddExerciseSheet) {
             AddExerciseView()

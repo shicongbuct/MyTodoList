@@ -46,6 +46,7 @@ final class Item {
     var priorityRaw: Int
     var sectionRaw: Int = 0
     var category: StudyCategory?
+    var sortOrder: Int = 0
 
     var priority: Priority {
         get { Priority(rawValue: priorityRaw) ?? .medium }

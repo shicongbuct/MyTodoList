@@ -65,7 +65,7 @@ struct ContentView: View {
                                         } onTap: {
                                             editingItem = item
                                         }
-                                        .id("\(item.persistentModelID)-pending")
+                                        .id("\(item.persistentModelID)-\(item.title)-pending")
                                         .transition(.asymmetric(
                                             insertion: .scale.combined(with: .opacity),
                                             removal: .slide.combined(with: .opacity)
@@ -82,7 +82,7 @@ struct ContentView: View {
                                         } onDelete: {
                                             deleteItem(item)
                                         }
-                                        .id("\(item.persistentModelID)-completed")
+                                        .id("\(item.persistentModelID)-\(item.title)-completed")
                                     }
                                 }
                             }
@@ -373,10 +373,6 @@ struct TodoCardView: View {
 
                     priorityBadge
                 }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onToggle()
             }
 
             Spacer()
