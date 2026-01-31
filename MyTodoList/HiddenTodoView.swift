@@ -12,8 +12,7 @@ struct HiddenTodoView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(
         filter: #Predicate<Item> { $0.sectionRaw == 2 },
-        sort: \Item.createdAt,
-        order: .reverse
+        sort: \Item.sortOrder
     ) private var items: [Item]
 
     let onExit: () -> Void
@@ -21,6 +20,7 @@ struct HiddenTodoView: View {
     @State private var showingAddSheet = false
     @State private var showingClearAlert = false
     @State private var editingItem: Item?
+    @State private var isEditMode = false
 
     private var pendingItems: [Item] {
         items.filter { !$0.isCompleted }
@@ -48,45 +48,53 @@ struct HiddenTodoView: View {
                 if items.isEmpty {
                     emptyStateView
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            if !pendingItems.isEmpty {
-                                sectionHeader("待办", count: pendingItems.count)
+                    List {
+                        if !pendingItems.isEmpty {
+                            SwiftUI.Section {
                                 ForEach(pendingItems) { item in
-                                    HiddenTodoCardView(item: item) {
-                                        toggleComplete(item)
-                                    } onDelete: {
-                                        deleteItem(item)
-                                    } onTap: {
-                                        editingItem = item
-                                    }
-                                    .id("\(item.persistentModelID)-pending-\(item.isCompleted)")
-                                    .transition(.asymmetric(
-                                        insertion: .scale.combined(with: .opacity),
-                                        removal: .slide.combined(with: .opacity)
-                                    ))
+                                    HiddenTodoCardView(
+                                        item: item,
+                                        isEditMode: isEditMode,
+                                        onToggle: { toggleComplete(item) },
+                                        onDelete: { deleteItem(item) },
+                                        onTap: { editingItem = item }
+                                    )
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                                 }
+                                .onMove(perform: movePendingItems)
+                            } header: {
+                                sectionHeader("待办", count: pendingItems.count)
+                                    .listRowInsets(EdgeInsets())
                             }
+                        }
 
-                            if !completedItems.isEmpty {
-                                completedSectionHeader
-                                    .padding(.top, pendingItems.isEmpty ? 0 : 20)
+                        if !completedItems.isEmpty {
+                            SwiftUI.Section {
                                 ForEach(completedItems) { item in
                                     HiddenCompletedCardView(item: item) {
                                         toggleComplete(item)
                                     } onDelete: {
                                         deleteItem(item)
                                     }
-                                    .id("\(item.persistentModelID)-completed-\(item.isCompleted)")
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                                 }
+                            } header: {
+                                completedSectionHeader
+                                    .listRowInsets(EdgeInsets())
                             }
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 100)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: items.map { $0.isCompleted })
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .contentMargins(.bottom, 120, for: .scrollContent)
+                    .environment(\.editMode, .constant(isEditMode ? .active : .inactive))
                 }
             }
+            .frame(maxHeight: .infinity)
 
             // 浮动添加按钮
             VStack {
@@ -158,6 +166,25 @@ struct HiddenTodoView: View {
             }
 
             Spacer()
+
+            // 编辑/完成按钮
+            if !pendingItems.isEmpty {
+                Button {
+                    withAnimation {
+                        isEditMode.toggle()
+                    }
+                } label: {
+                    Text(isEditMode ? "完成" : "排序")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(isEditMode ? .purple : .white.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(isEditMode ? Color.purple.opacity(0.2) : Color.white.opacity(0.1))
+                        )
+                }
+            }
 
             Button {
                 onExit()
@@ -251,6 +278,7 @@ struct HiddenTodoView: View {
             Spacer()
         }
         .padding(.top, 8)
+        .padding(.horizontal, 20)
     }
 
     private var completedSectionHeader: some View {
@@ -292,6 +320,7 @@ struct HiddenTodoView: View {
             }
         }
         .padding(.top, 8)
+        .padding(.horizontal, 20)
     }
 
     private func toggleComplete(_ item: Item) {
@@ -313,11 +342,22 @@ struct HiddenTodoView: View {
             }
         }
     }
+
+    private func movePendingItems(from source: IndexSet, to destination: Int) {
+        var pending = pendingItems
+        pending.move(fromOffsets: source, toOffset: destination)
+
+        // 更新所有项目的排序顺序
+        for (index, item) in pending.enumerated() {
+            item.sortOrder = index
+        }
+    }
 }
 
 // 隐藏事项卡片
 struct HiddenTodoCardView: View {
     let item: Item
+    var isEditMode: Bool = false
     let onToggle: () -> Void
     let onDelete: () -> Void
     let onTap: () -> Void
@@ -327,7 +367,7 @@ struct HiddenTodoCardView: View {
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            if showDeleteButton {
+            if showDeleteButton && !isEditMode {
                 HStack {
                     Spacer()
                     Button {
@@ -347,6 +387,7 @@ struct HiddenTodoCardView: View {
             }
 
             HStack(spacing: 16) {
+                // 左边圆圈：点击完成事项
                 Button {
                     onToggle()
                 } label: {
@@ -355,7 +396,9 @@ struct HiddenTodoCardView: View {
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
+                .disabled(isEditMode)
 
+                // 中间标题区域
                 VStack(alignment: .leading, spacing: 6) {
                     Text(item.title)
                         .font(.system(size: 16, weight: .medium))
@@ -371,22 +414,20 @@ struct HiddenTodoCardView: View {
                         .foregroundColor(.secondary)
                     }
                 }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onToggle()
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Spacer()
-
-                Button {
-                    onTap()
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary.opacity(0.5))
-                        .frame(width: 32, height: 32)
+                // 右边箭头：点击编辑
+                if !isEditMode {
+                    Button {
+                        onTap()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary.opacity(0.5))
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(16)
             .background(
@@ -406,10 +447,15 @@ struct HiddenTodoCardView: View {
                             .stroke(Color.purple.opacity(0.2), lineWidth: 1)
                     )
             )
-            .offset(x: offset)
+            .offset(x: isEditMode ? 0 : offset)
             .gesture(
-                DragGesture()
+                isEditMode ? nil :
+                DragGesture(minimumDistance: 20, coordinateSpace: .local)
                     .onChanged { value in
+                        let horizontalAmount = abs(value.translation.width)
+                        let verticalAmount = abs(value.translation.height)
+                        guard horizontalAmount > verticalAmount else { return }
+
                         if value.translation.width < 0 {
                             offset = max(value.translation.width, -80)
                         } else if showDeleteButton {
@@ -417,6 +463,13 @@ struct HiddenTodoCardView: View {
                         }
                     }
                     .onEnded { value in
+                        let horizontalAmount = abs(value.translation.width)
+                        let verticalAmount = abs(value.translation.height)
+
+                        if verticalAmount > horizontalAmount {
+                            return
+                        }
+
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             if value.translation.width < -50 {
                                 offset = -80
