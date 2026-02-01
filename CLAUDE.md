@@ -56,12 +56,12 @@ xcodebuild test -scheme MyTodoList -destination 'platform=iOS Simulator,name=iPh
 | 文件 | 说明 |
 |------|------|
 | `MyTodoListApp.swift` | 应用入口，配置 ModelContainer，初始化预设数据 |
-| `MainTabView.swift` | 主框架：TabBar（生活/学习/健身/Cook）+ FAB 按钮 |
+| `MainTabView.swift` | 主框架：TabBar（生活/学习/健身/Cook） |
 
 **生活模块：**
 | 文件 | 说明 |
 |------|------|
-| `ContentView.swift` | 生活任务列表 |
+| `ContentView.swift` | 生活任务列表（右上角添加按钮） |
 | `AddTodoView.swift` | 新建任务表单 |
 | `EditTodoView.swift` | 编辑任务表单 |
 
@@ -69,13 +69,13 @@ xcodebuild test -scheme MyTodoList -destination 'platform=iOS Simulator,name=iPh
 | 文件 | 说明 |
 |------|------|
 | `StudyView.swift` | 学习分类网格 |
-| `CategoryDetailView.swift` | 分类详情页 |
+| `CategoryDetailView.swift` | 分类详情页（右上角添加按钮） |
 | `AddCategoryView.swift` | 新建/编辑学习分类 |
 
 **健身模块：**
 | 文件 | 说明 |
 |------|------|
-| `FitnessView.swift` | 健身主页（今日计划、周/月计划） |
+| `FitnessView.swift` | 健身主页（今日计划、周/月计划、右下角添加按钮） |
 | `AddExerciseView.swift` | 添加今日运动 |
 | `AddExercisePresetView.swift` | 添加运动预设 |
 
@@ -102,6 +102,7 @@ xcodebuild test -scheme MyTodoList -destination 'platform=iOS Simulator,name=iPh
 
 ### UI 交互
 
+- 各模块独立的添加按钮（生活/学习详情页右上角，健身右下角）
 - 任务卡片支持左滑显示删除按钮
 - 已完成任务区域有"清空全部"功能
 - 学习分类卡片通过 Menu 提供编辑/删除选项

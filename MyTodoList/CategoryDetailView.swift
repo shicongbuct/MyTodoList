@@ -14,13 +14,13 @@ struct CategoryDetailView: View {
     let category: StudyCategory
     var navigationState: NavigationState?
 
-    @Query private var allItems: [Item]
+    @Query(sort: \Item.createdAt, order: .reverse) private var allItems: [Item]
     @State private var showingClearAlert = false
     @State private var editingItem: Item?
+    @State private var showingAddSheet = false
 
     private var categoryItems: [Item] {
         allItems.filter { $0.category?.persistentModelID == category.persistentModelID }
-            .sorted { $0.createdAt > $1.createdAt }
     }
 
     private var pendingItems: [Item] {
@@ -98,9 +98,26 @@ struct CategoryDetailView: View {
                         .foregroundColor(.white)
                 }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingAddSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(categoryColor)
+                        )
+                }
+            }
         }
         .sheet(item: $editingItem) { item in
             EditTodoView(item: item)
+        }
+        .sheet(isPresented: $showingAddSheet) {
+            AddTodoView(initialSection: .study, initialCategory: category)
         }
         .onAppear {
             navigationState?.selectedStudyCategory = category
@@ -233,6 +250,7 @@ struct CategoryDetailView: View {
     private func deleteItem(_ item: Item) {
         withAnimation(.easeOut(duration: 0.3)) {
             modelContext.delete(item)
+            try? modelContext.save()
         }
     }
 
@@ -241,6 +259,7 @@ struct CategoryDetailView: View {
             for item in completedItems {
                 modelContext.delete(item)
             }
+            try? modelContext.save()
         }
     }
 }

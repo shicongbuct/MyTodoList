@@ -15,10 +15,7 @@ class NavigationState {
 
 struct MainTabView: View {
     @State private var selectedTab = 0
-    @State private var showingAddSheet = false
     @State private var showingAddExerciseSheet = false
-    @State private var addSection: Section = .life
-    @State private var addCategory: StudyCategory?
     @State private var navigationState = NavigationState()
 
     var body: some View {
@@ -39,14 +36,8 @@ struct MainTabView: View {
             }
 
             customTabBar
-
-            fabButton
-                .offset(y: -12)
         }
         .ignoresSafeArea(.keyboard)
-        .sheet(isPresented: $showingAddSheet) {
-            AddTodoView(initialSection: addSection, initialCategory: addCategory)
-        }
         .sheet(isPresented: $showingAddExerciseSheet) {
             AddExerciseView()
         }
@@ -56,15 +47,8 @@ struct MainTabView: View {
     private var customTabBar: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                // 左侧两个 tab
                 tabButton(icon: "house.fill", label: "生活", tag: 0)
                 tabButton(icon: "book.fill", label: "学习", tag: 1)
-
-                // 中间 FAB 占位
-                Spacer()
-                    .frame(width: 72)
-
-                // 右侧两个 tab
                 tabButton(icon: "figure.run", label: "健身", tag: 2)
                 tabButton(icon: "fork.knife", label: "Cook", tag: 3)
             }
@@ -133,51 +117,6 @@ struct MainTabView: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
-    }
-
-    private var fabButton: some View {
-        Button {
-            if selectedTab == 2 {
-                // 健身 tab: 弹出添加运动
-                showingAddExerciseSheet = true
-            } else if let category = navigationState.selectedStudyCategory {
-                // 在学习分类详情页
-                addSection = .study
-                addCategory = category
-                showingAddSheet = true
-            } else if selectedTab == 1 {
-                // 在学习主页
-                addSection = .study
-                addCategory = nil
-                showingAddSheet = true
-            } else if selectedTab == 0 {
-                // 在生活页
-                addSection = .life
-                addCategory = nil
-                showingAddSheet = true
-            }
-            // Cook tab (3) 不响应 FAB
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.55, green: 0.35, blue: 1.0),
-                                Color(red: 0.40, green: 0.25, blue: 0.95)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 56, height: 56)
-                    .shadow(color: Color.purple.opacity(0.5), radius: 15, x: 0, y: 8)
-
-                Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(.white)
-            }
-        }
     }
 }
 

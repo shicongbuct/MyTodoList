@@ -327,6 +327,7 @@ struct AddTodoView: View {
             category: selectedCategory
         )
         modelContext.insert(newItem)
+        try? modelContext.save()
         dismiss()
     }
 }

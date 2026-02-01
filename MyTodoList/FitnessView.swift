@@ -97,6 +97,39 @@ struct FitnessView: View {
                     }
                     .padding(.horizontal, 20)
                 }
+
+                // 右下角 FAB 按钮
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            showingAddExercise = true
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.green,
+                                                Color.green.opacity(0.7)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 56, height: 56)
+                                    .shadow(color: Color.green.opacity(0.5), radius: 15, x: 0, y: 8)
+
+                                Image(systemName: "plus")
+                                    .font(.system(size: 22, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 100)
+                    }
+                }
             }
             .navigationBarHidden(true)
             .onAppear {
