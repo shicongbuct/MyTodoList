@@ -11,6 +11,7 @@ import SwiftData
 struct AddHiddenTodoView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(filter: #Predicate<Item> { $0.sectionRaw == 2 && !$0.isCompleted }) private var existingItems: [Item]
 
     @State private var title = ""
     @State private var notes = ""
@@ -125,12 +126,15 @@ struct AddHiddenTodoView: View {
     }
 
     private func addItem() {
+        // 新事项排在最前面
+        let minSortOrder = existingItems.map { $0.sortOrder }.min() ?? 0
         let item = Item(
             title: title,
             notes: notes,
             priority: priority,
             section: .hidden
         )
+        item.sortOrder = minSortOrder - 1
         modelContext.insert(item)
         dismiss()
     }
