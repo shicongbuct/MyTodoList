@@ -374,10 +374,6 @@ struct StudyTodoCardView: View {
                     priorityBadge
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onToggle()
-            }
 
             Spacer()
 
