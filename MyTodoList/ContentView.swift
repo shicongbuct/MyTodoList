@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var searchText = ""
     @State private var showingClearAlert = false
     @State private var editingItem: Item?
+    @State private var showingAddSheet = false
 
     private var filteredItems: [Item] {
         if searchText.isEmpty {
@@ -92,10 +93,14 @@ struct ContentView: View {
                         .searchable(text: $searchText, prompt: "搜索任务...")
                     }
                 }
+
             }
             .navigationBarHidden(true)
             .sheet(item: $editingItem) { item in
                 EditTodoView(item: item)
+            }
+            .sheet(isPresented: $showingAddSheet) {
+                AddTodoView(initialSection: .life, initialCategory: nil)
             }
             .alert("清空已完成", isPresented: $showingClearAlert) {
                 Button("取消", role: .cancel) { }
@@ -110,23 +115,40 @@ struct ContentView: View {
     }
 
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(Date(), format: .dateTime.weekday(.wide).month().day())
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(Date(), format: .dateTime.weekday(.wide).month().day())
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
 
-            Text("生活")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.white, Color(white: 0.8)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                Text("生活")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, Color(white: 0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
+            }
+
+            Spacer()
+
+            Button {
+                showingAddSheet = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color.cyan)
+                    )
+            }
+            .padding(.top, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 16)
